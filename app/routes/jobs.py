@@ -4,7 +4,6 @@ from app.services.job_service import (
     fetch_jobs_from_db,
     fetch_job_by_id,
     scrape_and_save_jobs_service,
-    scrape_and_save_jobs_google_service,
 )
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])  #  Add prefix and tags
