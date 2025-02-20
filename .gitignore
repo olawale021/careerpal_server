@@ -1,0 +1,10 @@
+app/.env
+app/__pycache__/**
+app/routes/__pycache__/auth.cpython-311.pyc
+app/routes/__pycache__/jobs.cpython-311.pyc
+app/routes/__pycache__/resume.cpython-311.pyc
+app/routes/__pycache__/users.cpython-311.pyc
+app/services/__pycache__/auth_service.cpython-311.pyc
+app/services/__pycache__/job_service.cpython-311.pyc
+app/services/__pycache__/resume_service.cpython-311.pyc
+app/services/__pycache__/users_services.cpython-311.pyc
