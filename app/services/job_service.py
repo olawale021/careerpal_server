@@ -1,4 +1,4 @@
-from app.database import database
+from database import database
 from fastapi import HTTPException
 
 async def fetch_jobs_from_db(page: int, limit: int):

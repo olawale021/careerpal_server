@@ -1,0 +1,46 @@
+# FastAPI & ASGI Server
+fastapi==0.115.8
+uvicorn==0.34.0
+
+# Security & Authentication
+passlib[bcrypt]  # Password hashing
+pyjwt  # JWT authentication
+itsdangerous  # Used in Starlette sessions
+
+# Databases & ORM
+databases  # Async database connections
+SQLAlchemy  # ORM for database interaction
+asyncpg  # PostgreSQL driver (remove if using SQLite)
+pymongo  # MongoDB driver (remove if not using MongoDB)
+
+# Cloud & Storage
+boto3  # AWS SDK for S3 integration
+
+# Web Scraping
+beautifulsoup4  # Web scraping library
+requests  # HTTP requests handling
+requests-file  # File handling with requests
+requests-toolbelt  # Additional utilities for requests
+
+# Data Processing & AI
+pydantic==2.10.6  # Data validation
+pydantic-extra-types==2.10.2  # Additional types for Pydantic
+pydantic-settings==2.7.1  # Configuration management
+openai==1.63.0  # OpenAI API integration
+scikit-learn  # Machine learning utilities
+tensorflow==2.16.1  # Deep learning
+tensorflow-io-gcs-filesystem==0.37.0  # TensorFlow cloud storage support
+torch==2.5.1  # PyTorch for deep learning
+python-multipart
+pycountry
+
+# PDF & DOCX Processing
+PyPDF2  # Extract text from PDF
+python-docx  # Process DOCX files
+docx2txt  # Extract text from DOCX
+
+# Environment Variables Management
+python-dotenv  # Load environment variables
+
+# OAuth & Social Authentication
+authlib  # OAuth authentication

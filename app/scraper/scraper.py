@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import datetime
 import time
 from databases import Database
-from app import database
+from server import database
 from datetime import datetime
 
 # Define headers to mimic a browser request

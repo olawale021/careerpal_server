@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from app.database import database
+from database import database
 from app.services.users_services import (
     fetch_users_from_db, 
     fetch_user_by_id, 

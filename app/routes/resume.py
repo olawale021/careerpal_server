@@ -1,7 +1,7 @@
 import os
 import boto3
 import uuid
-from app.database import database
+from database import database
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
 import jwt
@@ -195,7 +195,7 @@ async def score_user_resume(
     return {"message": "Resume scored successfully", "data": score_result}
 
 
-@router.post("/optimize/")
+@router.post("/optimize")
 async def optimize_user_resume(
     file: UploadFile = File(...), 
     job_description: str = Form(...)

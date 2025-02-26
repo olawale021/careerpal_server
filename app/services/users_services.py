@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from app.database import database
+from database import database
 import logging
 
 logger = logging.getLogger(__name__)

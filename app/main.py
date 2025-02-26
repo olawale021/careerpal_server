@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.database import database
+from database import database
 from app.routes.auth import router as auth_router
 from app.routes.jobs import router as jobs_router
 from app.routes.resume import router as resume_router
@@ -18,6 +18,8 @@ from app.routes.users import router as users_router
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)  # Set logging level
 logger = logging.getLogger(__name__)  # Get the logger instance
+
+
 
 
 @asynccontextmanager
@@ -42,15 +44,23 @@ app = FastAPI(lifespan=lifespan)
 # Middleware for debugging requests
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET"))
 
+origins = [
+    "http://localhost:3000",  # React dev server
+
+    "https://careerpalclient.vercel.app",  # vercel url
+    "http://cp-v1-gfcvakcrdnd8gsgh.ukwest-01.azurewebsites.net",  # Backend URL
+    "https://cp-v1-gfcvakcrdnd8gsgh.ukwest-01.azurewebsites.net",  # Secure backend URL
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Add debugging logs for request and response tracking
+## Add debugging logs for request and response tracking
 @app.middleware("http")
 async def log_requests(request, call_next):
     logger.info(f"➡️ Incoming Request: {request.method} {request.url}")
@@ -64,7 +74,12 @@ app.include_router(jobs_router)
 app.include_router(resume_router)
 app.include_router(users_router)
 
+
 @app.get("/")
 def root():
     logger.info("Root API is running!")
     return {"message": "API is running with Lifespan!"}
+
+@app.get("/health")
+async def root():
+    return {"message": "Health Okay"}

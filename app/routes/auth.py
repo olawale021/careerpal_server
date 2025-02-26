@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
-from app.database import database
+from database import database
 from app.services.auth_service import (
     create_jwt_token, get_user_by_email, register_user_with_password, register_user_with_google, authenticate_user, oauth
 )
@@ -66,24 +66,24 @@ async def google_callback_post(request: Request):
         print("Error processing Google callback:", str(e))
         raise HTTPException(status_code=500, detail="Internal Server Error")
         
-@router.get("/google/callback")
-async def google_callback(request: Request):
-    """Handle Google OAuth callback"""
-    try:
-        token = await oauth.google.authorize_access_token(request)
-        user_info = token.get("userinfo")
+# @router.get("/google/callback")
+# async def google_callback(request: Request):
+#     """Handle Google OAuth callback"""
+#     try:
+#         token = await oauth.google.authorize_access_token(request)
+#         user_info = token.get("userinfo")
 
-        if not user_info:
-            raise HTTPException(status_code=400, detail="Failed to fetch user info from Google")
+#         if not user_info:
+#             raise HTTPException(status_code=400, detail="Failed to fetch user info from Google")
 
-        email = user_info["email"]
-        google_id = user_info["sub"]
-        full_name = user_info.get("name", "")
+#         email = user_info["email"]
+#         google_id = user_info["sub"]
+#         full_name = user_info.get("name", "")
 
-        user = await register_user_with_google(email, full_name, google_id)  # Register or get existing user
-        jwt_token = await create_jwt_token(user)
+#         user = await register_user_with_google(email, full_name, google_id)  # Register or get existing user
+#         jwt_token = await create_jwt_token(user)
 
-        return {"access_token": jwt_token, "token_type": "bearer", "user": user}
+#         return {"access_token": jwt_token, "token_type": "bearer", "user": user}
     
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+#     except Exception as e:
+#         return JSONResponse(status_code=500, content={"error": str(e)})

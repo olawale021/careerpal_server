@@ -12,7 +12,7 @@ from fastapi import HTTPException
 load_dotenv()
 JWT_SECRET = os.getenv("JWT_SECRET")
 
-from app.database import database
+from database import database
 
 # Initialize OAuth for Google authentication
 oauth = OAuth()
