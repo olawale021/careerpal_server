@@ -18,7 +18,8 @@ from app.services.resume_service import (
     optimize_resume,
     generate_interview_questions,
     extract_job_requirements,
-    segment_resume_sections
+    segment_resume_sections,
+    create_tailored_resume_content
 )
 
 # Models for request/response
@@ -295,26 +296,28 @@ async def optimize_user_resume(
     Returns an AI-enhanced resume with improved alignment to the job.
     Can accept either a file upload or an existing resume_id.
     """
-    if not job_description:
-        raise HTTPException(status_code=400, detail="Job description is required.")
-        
-    if not file and not resume_id:
-        raise HTTPException(status_code=400, detail="Either file or resume_id is required.")
-        
-    if file and resume_id:
-        raise HTTPException(status_code=400, detail="Cannot provide both file and resume_id.")
-
     try:
+        # Validate input - either file or resume_id must be provided
+        if not file and not resume_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Either a resume file or resume_id must be provided"
+            )
+            
+        # If resume_id is provided, fetch the file from storage
         if resume_id:
-            # Fetch resume from storage using resume_id
+            # Verify the resume exists in database
             query = """
-                SELECT storage_path, file_name FROM resumes WHERE id = :resume_id
+                SELECT storage_path, file_name
+                FROM resumes
+                WHERE id = :resume_id
+                LIMIT 1
             """
             record = await database.fetch_one(query, {"resume_id": resume_id})
             
             if not record:
                 raise HTTPException(status_code=404, detail="Resume not found")
-                
+
             # Get file from storage
             file_data = supabase.storage.from_("careerpal").download(record["storage_path"])
             file_like = io.BytesIO(file_data)
@@ -323,26 +326,33 @@ async def optimize_user_resume(
                 file=file_like,
                 headers={"content-type": "application/octet-stream"}
             )
-
+        
+        # First extract the contact details directly
+        original_resume_data = await extract_resume_text(file)
+        
+        # Need to rewind the file after reading it
+        await file.seek(0)
+        
         # Get optimized resume
         optimized_resume = await optimize_resume(file, job_description)
         
         if "error" in optimized_resume:
             raise HTTPException(status_code=500, detail=optimized_resume["error"])
         
-        # Extract original resume text for comparison
-        original_resume = await extract_resume_text(file)
-        
+        # Add contact details to the optimized resume response
         return {
             "message": "Resume optimized successfully",
             "data": optimized_resume,
-            "original": original_resume.get("structured_resume", {})
+            "original": original_resume_data.get("structured_resume", {}),
+            "contact_details": original_resume_data.get("contact_details", {})
         }
+    
     except HTTPException as e:
         raise e
     except Exception as e:
+        print(f"Error optimizing resume: {str(e)}")
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Error optimizing resume: {str(e)}"
         )
 
@@ -487,4 +497,107 @@ async def get_job_requirements(
         raise HTTPException(
             status_code=500,
             detail=f"Error extracting job requirements: {str(e)}"
+        )
+
+
+@router.post("/create-tailored")
+async def create_tailored_resume(
+    job_description: str = Form(...),
+    file: Optional[UploadFile] = None,
+    resume_id: Optional[str] = Form(None),
+    user_id: Optional[str] = Form(None)
+):
+    """
+    Creates a tailored resume for jobs with a low match score.
+    Takes a job description and either a file upload or an existing resume_id,
+    then generates an optimized version specifically tailored for that job.
+    Returns the tailored resume content as JSON.
+    """
+    if not job_description:
+        raise HTTPException(status_code=400, detail="Job description is required.")
+        
+    if not file and not resume_id:
+        raise HTTPException(status_code=400, detail="Either file or resume_id is required.")
+        
+    if file and resume_id:
+        raise HTTPException(status_code=400, detail="Cannot provide both file and resume_id.")
+
+    try:
+        resume_data = None
+        
+        # Handle resume_id case - fetch from storage
+        if resume_id:
+            # Verify the resume exists in database
+            query = """
+                SELECT storage_path, file_name, user_id
+                FROM resumes
+                WHERE id = :resume_id
+                LIMIT 1
+            """
+            record = await database.fetch_one(query, {"resume_id": resume_id})
+            
+            if not record:
+                raise HTTPException(status_code=404, detail="Resume not found")
+            
+            # If user_id wasn't provided, use the one from the database
+            if not user_id:
+                user_id = record["user_id"]
+                
+            try:
+                # Download file from Supabase Storage
+                file_data = supabase.storage.from_("careerpal").download(record["storage_path"])
+                
+                # Create a temporary file-like object
+                file_like = BytesIO(file_data)
+                
+                # Create UploadFile with correct parameters
+                file = UploadFile(
+                    filename=record["file_name"],
+                    file=file_like,
+                    headers={"content-type": "application/octet-stream"}
+                )
+            except Exception as storage_error:
+                print(f"Storage Error: {str(storage_error)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to fetch resume from storage: {str(storage_error)}"
+                )
+        
+        # Extract resume data (works with either uploaded file or file from storage)
+        resume_data = await extract_resume_text(file)
+        
+        # Check for extraction errors
+        if "error" in resume_data:
+            raise HTTPException(
+                status_code=500, 
+                detail=resume_data["error"]
+            )
+        
+        # Generate a tailored resume using AI
+        tailored_resume = await create_tailored_resume_content(resume_data, job_description)
+        
+        # Check for tailoring errors
+        if "error" in tailored_resume:
+            raise HTTPException(
+                status_code=500,
+                detail=tailored_resume["error"]
+            )
+        
+        # Return the tailored resume data
+        return {
+            "message": "Tailored resume created successfully",
+            "data": {
+                "tailored_resume": tailored_resume,
+                "original_resume": resume_data.get("structured_resume", {}),
+                "contact_details": resume_data.get("contact_details", {})
+            }
+        }
+            
+    except HTTPException as http_err:
+        raise http_err
+    except Exception as e:
+        print(f"Error creating tailored resume: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating tailored resume: {str(e)}"
         )

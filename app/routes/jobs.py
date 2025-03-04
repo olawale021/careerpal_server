@@ -53,12 +53,12 @@ async def scrape_jobs(query: str = Body(..., embed=True)):
     return await scrape_and_save_jobs_service(query)
 
 
-@router.post("/scrape-google/")
-async def scrape_jobs_google(
-    query: str = Body(..., embed=True), 
-    location: str = Body(..., embed=True)
-):
-    """
-    Scrape jobs from Google Jobs and save them to the database.
-    """
-    return await scrape_and_save_jobs_google_service(query, location)
+# @router.post("/scrape-google/")
+# async def scrape_jobs_google(
+#     query: str = Body(..., embed=True), 
+#     location: str = Body(..., embed=True)
+# ):
+#     """
+#     Scrape jobs from Google Jobs and save them to the database.
+#     """
+#     return await scrape_and_save_jobs_google_service(query, location)
